@@ -52,6 +52,9 @@ DMA_HandleTypeDef hdma_tim2_ch1;
 /* USER CODE BEGIN PV */
 // TODO: Add code for global variables, including LUTs
 
+typedef enum {SINE,SAWTOOTH, TRIANGLE} WaveformType;
+WaveformType current_waveform = SINE;
+
 uint32_t Sin_LUT[NS];
 //fill up the Sin lup table
 for (int i = 0; i < NS; i++) {
@@ -363,15 +366,43 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+static uint32_t last_pushdown_time = 0;
 void EXTI0_1_IRQHandler(void)
 {
 	// TODO: Debounce using HAL_GetTick()
+	uint32_t current_pushdown_time = HAL_GetTick();
+	if (current_pushdown_time - last_pushdown_time < 200)
+		return;
 
+	last_pushdown_time = current_pushdown_time;
 
 	// TODO: Disable DMA transfer and abort IT, then start DMA in IT mode with new LUT and re-enable transfer
+	__HAL_TIM_DISABLE_DMA(&htim2, TIM_DMA_CC1);
+
+    	HAL_DMA_Abort_IT(&hdma_tim2_ch1);
 	// HINT: Consider using C's "switch" function to handle LUT changes
+	switch (current_waveform) {
+	        case SINE:
+	            // Change to sawtooth waveform
+	            HAL_DMA_Start_IT(&hdma_tim2_ch1, (uint32_t)saw_LUT, DestAddress, NS);
+	            write_LCD("Sawtooth");
+	            current_waveform = SAWTOOTH;
+	            break;
+	        case SAWTOOTH:
+	            // Change to triangular waveform
+	            HAL_DMA_Start_IT(&hdma_tim2_ch1, (uint32_t)triangle_LUT, DestAddress, NS);
+	            write_LCD("Triangle");
+	            current_waveform = TRIANGLE;
+	            break;
+	        case TRIANGLE:
+	            // Change back to sine waveform
+	            HAL_DMA_Start_IT(&hdma_tim2_ch1, (uint32_t)Sin_LUT, DestAddress, NS);
+	            write_LCD("Sine");
+	            current_waveform = SINE;
+	            break;
+	    }
 
-
+	__HAL_TIM_ENABLE_DMA(&htim2, TIM_DMA_CC1);
 
 	HAL_GPIO_EXTI_IRQHandler(Button0_Pin); // Clear interrupt flags
 }
