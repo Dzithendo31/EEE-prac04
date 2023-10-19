@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include "stm32f0xx.h"
 #include <lcd_stm32f0.c>
+#include <math.h> // Include the math library for sin() function
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,27 +57,12 @@ typedef enum {SINE,SAWTOOTH, TRIANGLE} WaveformType;
 WaveformType current_waveform = SINE;
 
 uint32_t Sin_LUT[NS];
-//fill up the Sin lup table
-for (int i = 0; i < NS; i++) {
-	Sin_LUT[i] = (uint32_t)(512 + 511 * sin(2 * M_PI * i / NS));
-}
 
 uint32_t saw_LUT[NS];
-for (int i = 0; i < NS; i++) {
-	saw_LUT[i] = (uint32_t)(i * (1023.0 / (NS - 1)));
-}
 
 uint32_t triangle_LUT[NS];
-for (int i = 0; i < NS; i++) {
-    if (i < NS / 2) {
-    	triangle_LUT[i] = (uint32_t)(i * (1023.0 / (NS / 2)));
-    } else {
-    	triangle_LUT[i] = (uint32_t)((NS - i) * (1023.0 / (NS / 2)));
-    }
-}
 // TODO: Equation to calculate TIM2_Ticks
-uint32_t TIM2_Ticks = 0; // How often to write new LUT value
-TIM2_Ticks = TIM2CLK / (F_SIGNAL * NS);
+uint32_t TIM2_Ticks = TIM2CLK / (F_SIGNAL * NS);
 uint32_t DestAddress = (uint32_t) &(TIM3->CCR3); // Write LUT TO TIM3->CCR3 to modify PWM duty cycle
 
 /* USER CODE END PV */
@@ -105,7 +91,23 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
   /* USER CODE END 1 */
+	for (int i = 0; i < NS; i++) {
+	        Sin_LUT[i] = (uint32_t)(512 + 511 * sin(2 * M_PI * i / NS));
+	    }
 
+	//Saw
+	for (int i = 0; i < NS; i++) {
+	        saw_LUT[i] = (uint32_t)(i * (1023.0 / (NS - 1)));
+	    }
+
+	//triangel
+	for (int i = 0; i < NS; i++) {
+	        if (i < NS / 2) {
+	            triangle_LUT[i] = (uint32_t)(i * (1023.0 / (NS / 2)));
+	        } else {
+	            triangle_LUT[i] = (uint32_t)((NS - i) * (1023.0 / (NS / 2)));
+	        }
+	    }
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -137,12 +139,12 @@ int main(void)
   HAL_DMA_Start_IT(&hdma_tim2_ch1, (uint32_t)Sin_LUT, DestAddress, NS);
 
   // TODO: Write current waveform to LCD ("Sine")
-  write_LCD("Sine");
+  writeLCD("Sine");
 
   // TODO: Write current waveform to LCD ("Sine")
   delay(3000);
 
-  // TODO: Enable DMA (start transfer from LUT to CCR)
+  // TODO: Enable DMA (start transfer from LUT to CCR)d
 
 
   /* USER CODE END 2 */
@@ -251,7 +253,12 @@ static void MX_TIM2_Init(void)
   /* USER CODE END TIM2_Init 2 */
 
 }
+void writeLCD(char *char_in){
+    delay(3000);
+	lcd_command(CLEAR);
 
+	lcd_putstring(char_in);
+}
 /**
   * @brief TIM3 Initialization Function
   * @param None
@@ -385,19 +392,19 @@ void EXTI0_1_IRQHandler(void)
 	        case SINE:
 	            // Change to sawtooth waveform
 	            HAL_DMA_Start_IT(&hdma_tim2_ch1, (uint32_t)saw_LUT, DestAddress, NS);
-	            write_LCD("Sawtooth");
+	            writeLCD("Sawtooth");
 	            current_waveform = SAWTOOTH;
 	            break;
 	        case SAWTOOTH:
 	            // Change to triangular waveform
 	            HAL_DMA_Start_IT(&hdma_tim2_ch1, (uint32_t)triangle_LUT, DestAddress, NS);
-	            write_LCD("Triangle");
+	            writeLCD("Triangle");
 	            current_waveform = TRIANGLE;
 	            break;
 	        case TRIANGLE:
 	            // Change back to sine waveform
 	            HAL_DMA_Start_IT(&hdma_tim2_ch1, (uint32_t)Sin_LUT, DestAddress, NS);
-	            write_LCD("Sine");
+	            writeLCD("Sine");
 	            current_waveform = SINE;
 	            break;
 	    }
