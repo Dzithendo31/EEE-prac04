@@ -123,7 +123,7 @@ int main(void)
 
 			lcd_putstring("Sending Msg...");
 
-		  for (int i = 8; i > 0; i--) {
+		  for (int i = 7; i >= 0; i--) {
 		      if (startFlag & (1 << i)) {
 		          HAL_GPIO_WritePin(LED7_GPIO_Port, LED7_Pin, GPIO_PIN_SET);
 		      } else {
@@ -137,7 +137,7 @@ int main(void)
 
 		  // Convert ADC value to a 12-bit binary representation
 		  char binary[13];
-		  for (int i = 0; i < 12; i++) {
+		  for (int i = 11; i >=0 ; i++) {
 			  binary[11 - i] = (adc_value & (1 << i)) ? '1' : '0';
 		  }
 		  binary[12] = '\0';
@@ -153,7 +153,7 @@ int main(void)
 		      HAL_Delay(500);
 		  }
 
-		  for (int i = 8; i > 0; i--) {
+		  for (int i = 7; i >= 0; i--) {
 			  if (endFlag & (1 << i)) {
 				  HAL_GPIO_WritePin(LED7_GPIO_Port, LED7_Pin, GPIO_PIN_SET);
 			  } else {
