@@ -123,6 +123,15 @@ int main(void)
 
 			lcd_putstring("Sending Msg...");
 
+			uint32_t adc_value = pollADC();
+
+			// Convert ADC value to a 12-bit binary representation
+			char binary[13];
+			for (int i = 11; i >=0 ; i--) {
+				binary[i] = (adc_value & (1 << i)) ? '1' : '0';
+			}
+			binary[12] = '\0';
+
 		  for (int i = 7; i >= 0; i--) {
 		      if (startFlag & (1 << i)) {
 		          HAL_GPIO_WritePin(LED7_GPIO_Port, LED7_Pin, GPIO_PIN_SET);
@@ -133,14 +142,7 @@ int main(void)
 		      HAL_Delay(500);
 		  }
 
-		  uint32_t adc_value = pollADC();
 
-		  // Convert ADC value to a 12-bit binary representation
-		  char binary[13];
-		  for (int i = 11; i >=0 ; i--) {
-			  binary[11 - i] = (adc_value & (1 << i)) ? '1' : '0';
-		  }
-		  binary[12] = '\0';
 
 		  // Blink LED7 according to the binary value
 		  for (int i = 0; i < 12; i++) {
@@ -161,6 +163,8 @@ int main(void)
 			  }
 			  HAL_Delay(500);
 		  }
+
+		  HAL_GPIO_WritePin(LED7_GPIO_Port, LED7_Pin, GPIO_PIN_RESET);
 		  buttonPressed =0;
 		  ++msgSent;
 	  }
