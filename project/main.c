@@ -137,7 +137,7 @@ int main(void)
 
 		  // Convert ADC value to a 12-bit binary representation
 		  char binary[13];
-		  for (int i = 11; i >=0 ; i++) {
+		  for (int i = 11; i >=0 ; i--) {
 			  binary[11 - i] = (adc_value & (1 << i)) ? '1' : '0';
 		  }
 		  binary[12] = '\0';
